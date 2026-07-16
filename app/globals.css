@@ -187,6 +187,29 @@
   font-size: 0.93rem;
 }
 
+.header-actions {
+  display: flex;
+  grid-column: 3;
+  align-items: center;
+  gap: 10px;
+}
+
+.language-switch {
+  height: 40px;
+  border: 1px solid #314158;
+  background: #0b2039;
+  color: #dce6f2;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.language-switch:hover,
+.language-switch:focus-visible {
+  border-color: #718096;
+  background: #15304f;
+  color: #ffffff;
+}
+
 .github-link:hover {
   border-color: #718096;
   background: #10243d;
@@ -356,7 +379,10 @@
 .ranking-header,
 .repository-row {
   display: grid;
-  grid-template-columns: 68px minmax(270px, 1.6fr) minmax(112px, 0.58fr) minmax(112px, 0.58fr) minmax(132px, 0.7fr);
+  grid-template-columns: 68px minmax(270px, 1.6fr) minmax(112px, 0.58fr) minmax(
+      112px,
+      0.58fr
+    ) minmax(132px, 0.7fr);
   align-items: center;
   gap: 14px;
 }
@@ -404,7 +430,9 @@
   background: #ffffff;
   color: inherit;
   text-align: left;
-  transition: background 140ms ease, box-shadow 140ms ease;
+  transition:
+    background 140ms ease,
+    box-shadow 140ms ease;
 }
 
 .repository-row:hover {
@@ -420,7 +448,9 @@
 .repository-row[data-selected="true"] {
   z-index: 1;
   background: #f4f8ff;
-  box-shadow: inset 4px 0 0 var(--selection), inset 0 0 0 1px #4b86ff;
+  box-shadow:
+    inset 4px 0 0 var(--selection),
+    inset 0 0 0 1px #4b86ff;
 }
 
 .repository-rank {
@@ -800,7 +830,6 @@
 
   .mobile-menu-trigger {
     display: inline-flex;
-    grid-column: 3;
   }
 
   .controls-row {
@@ -1017,7 +1046,9 @@
 }
 
 @media (min-width: 721px) {
-  .ranking-list-wrap:not([data-expanded="true"]) .ranking-list li[data-overflow="true"] {
+  .ranking-list-wrap:not([data-expanded="true"])
+    .ranking-list
+    li[data-overflow="true"] {
     display: none;
   }
 }
@@ -1031,6 +1062,14 @@
 
   .repo-pulse-logo {
     font-size: 1.5rem;
+  }
+
+  .header-actions {
+    gap: 5px;
+  }
+
+  .language-switch {
+    padding-inline: 10px;
   }
 
   .repo-pulse-logo-mark {

@@ -1,6 +1,9 @@
 export const PERIODS = ["daily", "weekly", "monthly"] as const
 export type Period = (typeof PERIODS)[number]
 
+export const LOCALES = ["en", "zh"] as const
+export type Locale = (typeof LOCALES)[number]
+
 export const SORT_KEYS = ["stars", "forks", "momentum"] as const
 export type SortKey = (typeof SORT_KEYS)[number]
 
@@ -34,11 +37,16 @@ export type RankingBundle = {
 export type RankingsByPeriod = Record<Period, RankingBundle>
 
 export type InitialFilters = {
+  locale: Locale
   period: Period
   query: string
   language: string
   topic: string
   sort: SortKey
+}
+
+export function isLocale(value: unknown): value is Locale {
+  return typeof value === "string" && LOCALES.includes(value as Locale)
 }
 
 export function isPeriod(value: unknown): value is Period {

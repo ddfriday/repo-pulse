@@ -1,5 +1,7 @@
 # RepoPulse
 
+[English](README.md) | [简体中文](README.zh-CN.md)
+
 Discover rising and popular GitHub repositories through stars, forks, activity, and growth trends.
 
 RepoPulse is an open-source repository discovery dashboard. It tracks public repository snapshots over time so developers can compare daily, weekly, and monthly momentum instead of relying only on lifetime star totals.

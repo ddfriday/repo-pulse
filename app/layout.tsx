@@ -20,6 +20,8 @@ export const metadata: Metadata = {
     "Discover rising and popular GitHub repositories through stars, forks, activity, and growth trends.",
   keywords: [
     "GitHub trending",
+    "GitHub 热门项目",
+    "开源项目排行榜",
     "repository discovery",
     "open source",
     "GitHub stars",
@@ -46,6 +48,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      data-scroll-behavior="smooth"
       className={cn("font-sans antialiased", geist.variable, fontMono.variable)}
     >
       <body>{children}</body>

@@ -2,21 +2,21 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-Discover rising and popular GitHub repositories through stars, forks, activity, and growth trends.
+Discover new and rising GitHub repositories through early traction, growth, freshness, and activity.
 
-RepoPulse is an open-source repository discovery dashboard. It tracks public repository snapshots over time so developers can compare daily, weekly, and monthly momentum instead of relying only on lifetime star totals.
+RepoPulse is an open-source repository discovery dashboard. It tracks public repository snapshots over time so developers can compare daily, weekly, and monthly momentum while reducing the advantage of old mega-repositories.
 
 ![RepoPulse desktop design concept](docs/design/repo-pulse-desktop-concept.png)
 
 ## What it includes
 
-- Daily, weekly, and monthly ranking views
-- Star growth, fork growth, and explainable momentum sorting
+- Daily, weekly, and monthly discovery views
+- Star growth, fork growth, early velocity, freshness, and explainable discovery sorting
 - Repository search, language filters, and topic filters
 - Responsive desktop and mobile layouts
 - URL-backed filters for shareable views
 - Supabase schema with RLS and indexed snapshot queries
-- GitHub Actions collection every six hours
+- GitHub Actions collection every six hours with a broader new-project candidate pool
 - A clearly labeled sample-data fallback before Supabase is configured
 
 ## Architecture
@@ -80,7 +80,27 @@ Run the collector locally only after setting the required environment variables:
 npm run collect
 ```
 
-The collector discovers a bounded candidate pool through GitHub Search, deduplicates repositories, performs batch upserts, and records one snapshot per repository per hour. The scheduled workflow runs every six hours and safely skips collection until Supabase secrets exist.
+The collector discovers a bounded candidate pool through GitHub Search, deduplicates repositories, scores candidates for discovery value, performs batch upserts, and records one snapshot per repository per hour. It favors newly created repositories, recent pushes, early star velocity, and emerging AI/developer-tool topics instead of simply keeping the largest repositories. The scheduled workflow runs every six hours and safely skips collection until Supabase secrets exist.
+
+## AI model
+
+RepoPulse does not need an AI model for the core ranking flow. GitHub Search, repository metadata, Supabase snapshots, and the Postgres ranking function are enough to discover and rank repositories.
+
+The collector can optionally call an OpenAI-compatible model to read repository metadata plus a README excerpt and write structured project insights back to Supabase. Keep model keys server-only. SenseNova can use `https://token.sensenova.cn/v1` with `sensenova-6.7-flash-lite`; DeepSeek can use the existing DeepSeek-compatible settings.
+
+```text
+AI_PROJECT_INSIGHTS_ENABLED
+AI_PROJECT_INSIGHTS_LIMIT
+AI_PROJECT_INSIGHTS_API_KEY
+AI_PROJECT_INSIGHTS_BASE_URL
+AI_PROJECT_INSIGHTS_MODEL
+SENSENOVA_API_KEY
+SENSENOVA_BASE_URL
+SENSENOVA_MODEL
+DEEPSEEK_API_KEY
+DEEPSEEK_BASE_URL
+DEEPSEEK_MODEL
+```
 
 ## Ranking caveat
 

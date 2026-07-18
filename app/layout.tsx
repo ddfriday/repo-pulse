@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     template: "%s · RepoPulse",
   },
   description:
-    "Discover rising and popular GitHub repositories through stars, forks, activity, and growth trends.",
+    "Discover new and rising GitHub repositories through early traction, freshness, activity, and growth trends.",
   keywords: [
     "GitHub trending",
     "GitHub 热门项目",
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "RepoPulse",
     description:
-      "Track repository momentum across stars, forks, releases, and activity.",
+      "Track new repository momentum across early traction, freshness, and activity.",
     type: "website",
   },
   twitter: {

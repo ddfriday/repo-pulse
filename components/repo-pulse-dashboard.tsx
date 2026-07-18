@@ -8,16 +8,15 @@ import {
   useState,
 } from "react"
 import {
-  ActivityIcon,
   ArrowUpDownIcon,
+  BotIcon,
   ChevronDownIcon,
   ChevronUpIcon,
-  Clock3Icon,
   Code2Icon,
+  CompassIcon,
   ExternalLinkIcon,
-  GitForkIcon,
-  InfoIcon,
   LanguagesIcon,
+  LinkIcon,
   MenuIcon,
   SearchIcon,
   SearchXIcon,
@@ -81,7 +80,13 @@ import {
 
 type SelectOption = { label: string; value: string }
 type IconComponent = LucideIcon
-type MethodologyKey = "starGrowth" | "forkGrowth" | "activity" | "freshness"
+type ProjectCategoryKey =
+  | "aiAgent"
+  | "automation"
+  | "creative"
+  | "developerTool"
+  | "library"
+  | "newProject"
 
 function GitHubMark(props: SVGProps<SVGSVGElement>) {
   return (
@@ -106,23 +111,32 @@ const PERIOD_LABELS: Record<Locale, Record<Period, string>> = {
 
 const COPY = {
   en: {
-    documentTitle: "RepoPulse — Discover rising GitHub repositories",
+    documentTitle: "RepoPulse — Discover new GitHub repositories",
     switchLanguage: "中文",
     switchLanguageAria: "Switch to Simplified Chinese",
     navigation: [
       { label: "Explore", href: "#explore", active: true },
+      { label: "AI Insight", href: "#ai-insight", active: false },
       { label: "Rankings", href: "#rankings", active: false },
       { label: "New & Rising", href: "#rankings", active: false },
-      { label: "Methodology", href: "#methodology", active: false },
     ],
     primaryNavigation: "Primary navigation",
     openNavigation: "Open navigation",
     mobileNavigationTitle: "RepoPulse navigation",
-    mobileNavigationDescription: "Jump to rankings and methodology.",
+    mobileNavigationDescription: "Jump to rankings and project insight.",
     mobileNavigation: "Mobile navigation",
     heroTitle: "Discover what's rising on GitHub",
     heroDescription:
-      "Track repository momentum across stars, forks, releases, and activity.",
+      "Surface young repositories with fast early traction and recent activity.",
+    quickLinks: [
+      { label: "Rankings", href: "#rankings" },
+      { label: "AI insight", href: "#ai-insight" },
+      {
+        label: "Source code",
+        href: "https://github.com/ddfriday/repo-pulse",
+        external: true,
+      },
+    ],
     searchAria: "Search repositories",
     searchPlaceholder: "Search repositories...",
     filters: "Filters",
@@ -152,56 +166,62 @@ const COPY = {
       "Try a broader search or reset the language and topic filters.",
     resetFilters: "Reset filters",
     rankingDetails: "Ranking details",
-    momentumOverview: "Momentum overview",
+    momentumOverview: "Discovery overview",
+    openRepository: "Open repository",
+    openHomepage: "Open homepage",
     growth: "growth",
-    howRankingWorks: "How ranking works",
-    methodologyNote:
-      "Scores normalize growth and freshness. Exact metric rankings remain visible so the result is explainable.",
-    methodology: {
-      starGrowth: {
-        title: "Star growth",
-        description: "Recent increase in stars over the selected period.",
-      },
-      forkGrowth: {
-        title: "Fork growth",
-        description: "Recent increase in forks over the selected period.",
-      },
-      activity: {
-        title: "Activity",
-        description:
-          "Recent pushes and release cadence signal maintained work.",
-      },
-      freshness: {
-        title: "Freshness",
-        description: "Extra weight for repositories with recent activity.",
-      },
+    aiInsightEyebrow: "Project read",
+    aiInsightTitle: "AI project insight",
+    aiInsightSourceAi: "Model",
+    aiInsightSourceMetadata: "Metadata",
+    aiCategory: "Type",
+    aiAudience: "Audience",
+    aiReason: "Why now",
+    aiSignals: "Signals",
+    aiModelPending: "Metadata read now; README model pass next.",
+    aiModelName: "Model",
+    aiCategoryLabels: {
+      aiAgent: "AI / agent app",
+      automation: "Automation workflow",
+      creative: "Creative or media tool",
+      developerTool: "Developer tool",
+      library: "Library / framework",
+      newProject: "New OSS project",
     },
     footer:
       "Tracking public repositories. Historical coverage grows over time.",
     sortOptions: [
       { label: "Stars gained", value: "stars" },
       { label: "Forks gained", value: "forks" },
-      { label: "Momentum", value: "momentum" },
+      { label: "Discovery score", value: "momentum" },
     ],
   },
   zh: {
-    documentTitle: "RepoPulse — 发现正在崛起的 GitHub 项目",
+    documentTitle: "RepoPulse — 发现新的 GitHub 项目",
     switchLanguage: "EN",
     switchLanguageAria: "切换到英文",
     navigation: [
       { label: "探索", href: "#explore", active: true },
+      { label: "AI 识别", href: "#ai-insight", active: false },
       { label: "排行榜", href: "#rankings", active: false },
       { label: "新锐项目", href: "#rankings", active: false },
-      { label: "排名方法", href: "#methodology", active: false },
     ],
     primaryNavigation: "主导航",
     openNavigation: "打开导航菜单",
     mobileNavigationTitle: "RepoPulse 导航",
-    mobileNavigationDescription: "快速前往排行榜和排名方法。",
+    mobileNavigationDescription: "快速前往排行榜和项目识别。",
     mobileNavigation: "移动端导航",
-    heroTitle: "发现 GitHub 上正在崛起的项目",
-    heroDescription:
-      "通过 Star、Fork、版本发布和活跃度，追踪开源项目的发展势头。",
+    heroTitle: "发现 GitHub 新锐项目",
+    heroDescription: "优先发现近期出现、早期增长快、仍在活跃更新的新锐项目。",
+    quickLinks: [
+      { label: "看排行榜", href: "#rankings" },
+      { label: "AI 识别", href: "#ai-insight" },
+      {
+        label: "源码仓库",
+        href: "https://github.com/ddfriday/repo-pulse",
+        external: true,
+      },
+    ],
     searchAria: "搜索仓库",
     searchPlaceholder: "搜索仓库名称、描述或 Topic...",
     filters: "筛选",
@@ -230,57 +250,88 @@ const COPY = {
     emptyDescription: "请尝试更宽泛的关键词，或重置语言和 Topic 筛选。",
     resetFilters: "重置筛选",
     rankingDetails: "排行榜详情",
-    momentumOverview: "增长势头概览",
+    momentumOverview: "发现分概览",
+    openRepository: "打开仓库",
+    openHomepage: "打开主页",
     growth: "增长",
-    howRankingWorks: "排名如何计算",
-    methodologyNote:
-      "评分会对增长幅度和活跃时效进行归一化，同时保留各项指标排行，确保结果清晰可解释。",
-    methodology: {
-      starGrowth: {
-        title: "Star 增长",
-        description: "所选周期内新增的 Star 数量。",
-      },
-      forkGrowth: {
-        title: "Fork 增长",
-        description: "所选周期内新增的 Fork 数量。",
-      },
-      activity: {
-        title: "项目活跃度",
-        description: "近期推送与版本发布节奏反映项目是否持续维护。",
-      },
-      freshness: {
-        title: "活跃时效",
-        description: "近期仍有活跃更新的仓库会获得额外权重。",
-      },
+    aiInsightEyebrow: "项目内容识别",
+    aiInsightTitle: "AI 项目识别",
+    aiInsightSourceAi: "模型",
+    aiInsightSourceMetadata: "元数据",
+    aiCategory: "类型",
+    aiAudience: "适合人群",
+    aiReason: "为什么值得看",
+    aiSignals: "识别信号",
+    aiModelPending: "当前先读元数据；README 模型识别已接入采集链路。",
+    aiModelName: "模型",
+    aiCategoryLabels: {
+      aiAgent: "AI / 智能体应用",
+      automation: "自动化工作流",
+      creative: "创意或媒体工具",
+      developerTool: "开发者工具",
+      library: "库 / 框架",
+      newProject: "新开源项目",
     },
     footer: "正在追踪公开仓库；随着采集持续进行，历史数据覆盖会逐步增长。",
     sortOptions: [
       { label: "按新增 Star", value: "stars" },
       { label: "按新增 Fork", value: "forks" },
-      { label: "按增长势头", value: "momentum" },
+      { label: "按发现分", value: "momentum" },
     ],
   },
 } as const
 
-const METHODOLOGY_ITEMS: Array<{
-  key: MethodologyKey
-  icon: IconComponent
+const PROJECT_CATEGORY_RULES: Array<{
+  key: ProjectCategoryKey
+  terms: string[]
 }> = [
   {
-    key: "starGrowth",
-    icon: StarIcon,
+    key: "aiAgent",
+    terms: [
+      "agent",
+      "agents",
+      "ai",
+      "chatbot",
+      "codex",
+      "llm",
+      "mcp",
+      "model",
+      "rag",
+    ],
   },
   {
-    key: "forkGrowth",
-    icon: GitForkIcon,
+    key: "developerTool",
+    terms: [
+      "cli",
+      "compiler",
+      "database",
+      "developer-tools",
+      "devtool",
+      "framework",
+      "sdk",
+      "testing",
+    ],
   },
   {
-    key: "activity",
-    icon: ActivityIcon,
+    key: "automation",
+    terms: ["automation", "bot", "browser", "pipeline", "scraper", "workflow"],
   },
   {
-    key: "freshness",
-    icon: Clock3Icon,
+    key: "creative",
+    terms: [
+      "3d",
+      "audio",
+      "creative",
+      "design",
+      "image",
+      "media",
+      "threejs",
+      "video",
+    ],
+  },
+  {
+    key: "library",
+    terms: ["component", "library", "package", "plugin", "ui"],
   },
 ]
 
@@ -463,6 +514,28 @@ function Hero({
           <SearchIcon aria-hidden="true" />
         </InputGroupAddon>
       </InputGroup>
+      <nav className="quick-links" aria-label={copy.primaryNavigation}>
+        {copy.quickLinks.map((item, index) => {
+          const isExternal = "external" in item && item.external
+          const Icon =
+            index === 0 ? CompassIcon : isExternal ? GitHubMark : BotIcon
+          return (
+            <a
+              className="quick-link"
+              href={item.href}
+              key={item.label}
+              rel={isExternal ? "noreferrer" : undefined}
+              target={isExternal ? "_blank" : undefined}
+            >
+              <Icon aria-hidden="true" data-icon="inline-start" />
+              {item.label}
+              {isExternal ? (
+                <ExternalLinkIcon aria-hidden="true" data-icon="inline-end" />
+              ) : null}
+            </a>
+          )
+        })}
+      </nav>
     </section>
   )
 }
@@ -702,30 +775,218 @@ function RepositoryRow({
   )
 }
 
-function MethodologyPanel({ locale }: { locale: Locale }) {
+function projectInsightCorpus(repository: RankedRepository) {
+  return [
+    repository.fullName,
+    repository.description,
+    repository.language,
+    ...repository.topics,
+  ]
+    .join(" ")
+    .toLowerCase()
+}
+
+function classifyRepository(repository: RankedRepository): ProjectCategoryKey {
+  const corpus = projectInsightCorpus(repository)
+  const matchedRule = PROJECT_CATEGORY_RULES.find((rule) =>
+    rule.terms.some((term) => corpus.includes(term))
+  )
+
+  return matchedRule?.key ?? "newProject"
+}
+
+function shortDate(value: string, locale: Locale) {
+  return new Intl.DateTimeFormat(locale === "zh" ? "zh-CN" : "en", {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  }).format(new Date(value))
+}
+
+function metadataSignals(
+  locale: Locale,
+  period: Period,
+  repository: RankedRepository
+) {
+  const labels = PERIOD_LABELS[locale]
+  const signals = [
+    repository.language,
+    repository.topics[0] ? "#" + repository.topics[0] : null,
+    "+" +
+      compactNumber(repository.starGain, locale) +
+      " " +
+      (locale === "zh" ? "Star" : "stars") +
+      " / " +
+      labels[period],
+    repository.forkGain
+      ? "+" +
+        compactNumber(repository.forkGain, locale) +
+        " " +
+        (locale === "zh" ? "Fork" : "forks")
+      : null,
+    repository.homepage
+      ? locale === "zh"
+        ? "有主页链接"
+        : "Homepage linked"
+      : null,
+  ]
+
+  return signals.filter((item): item is string => Boolean(item)).slice(0, 5)
+}
+
+function projectInsight(
+  locale: Locale,
+  period: Period,
+  repository: RankedRepository
+) {
+  const copy = COPY[locale]
+  const categoryKey = classifyRepository(repository)
+  const metadataCategory = copy.aiCategoryLabels[categoryKey]
+  const modelSignals = repository.aiSignals.filter(Boolean).slice(0, 5)
+  const source =
+    repository.aiSummary || repository.aiCategory || modelSignals.length
+      ? "ai"
+      : "metadata"
+  const category = repository.aiCategory ?? metadataCategory
+  const summary =
+    repository.aiSummary ??
+    (locale === "zh"
+      ? "根据仓库描述、语言和 Topic，当前更像是「" +
+        metadataCategory +
+        "」。原始描述：" +
+        repository.description
+      : repository.description +
+        " Based on language, description, and topics, this looks like a " +
+        metadataCategory.toLowerCase() +
+        ".")
+  const audience =
+    repository.aiAudience ??
+    (locale === "zh"
+      ? "正在寻找新工具或新技术方向的开发者"
+      : "Developers scanning for new tools or technical directions")
+  const reason =
+    repository.aiReason ??
+    (locale === "zh"
+      ? "本周期新增 " +
+        compactNumber(repository.starGain, locale) +
+        " Star、" +
+        compactNumber(repository.forkGain, locale) +
+        " Fork，最近推送在 " +
+        shortDate(repository.pushedAt, locale) +
+        "。"
+      : "This period added " +
+        compactNumber(repository.starGain, locale) +
+        " stars and " +
+        compactNumber(repository.forkGain, locale) +
+        " forks, with a recent push on " +
+        shortDate(repository.pushedAt, locale) +
+        ".")
+
+  return {
+    audience,
+    category,
+    reason,
+    signals: modelSignals.length
+      ? modelSignals
+      : metadataSignals(locale, period, repository),
+    source,
+    summary,
+  }
+}
+
+function ProjectInsightPanel({
+  locale,
+  period,
+  repository,
+}: {
+  locale: Locale
+  period: Period
+  repository: RankedRepository
+}) {
+  const copy = COPY[locale]
+  const insight = projectInsight(locale, period, repository)
+
+  return (
+    <section className="insight-panel ai-insight-panel" id="ai-insight">
+      <div className="ai-insight-kicker">
+        <span>
+          <BotIcon aria-hidden="true" />
+          {copy.aiInsightEyebrow}
+        </span>
+        <Badge variant="secondary">
+          {insight.source === "ai"
+            ? copy.aiInsightSourceAi
+            : copy.aiInsightSourceMetadata}
+        </Badge>
+      </div>
+      <h2>{copy.aiInsightTitle}</h2>
+      <p className="ai-insight-summary">{insight.summary}</p>
+      <dl className="ai-insight-facts">
+        <div>
+          <dt>{copy.aiCategory}</dt>
+          <dd>{insight.category}</dd>
+        </div>
+        <div>
+          <dt>{copy.aiAudience}</dt>
+          <dd>{insight.audience}</dd>
+        </div>
+      </dl>
+      <div className="ai-signal-block">
+        <span>{copy.aiSignals}</span>
+        <div className="ai-signal-list">
+          {insight.signals.map((signal) => (
+            <span key={signal}>{signal}</span>
+          ))}
+        </div>
+      </div>
+      <Separator />
+      <p className="ai-reason">
+        <strong>{copy.aiReason}</strong>
+        {insight.reason}
+      </p>
+      <p className="ai-model-note">
+        {repository.aiModel
+          ? copy.aiModelName + ": " + repository.aiModel
+          : copy.aiModelPending}
+      </p>
+    </section>
+  )
+}
+
+function RepositoryLinks({
+  locale,
+  repository,
+}: {
+  locale: Locale
+  repository: RankedRepository
+}) {
   const copy = COPY[locale]
 
   return (
-    <section className="insight-panel methodology-panel" id="methodology">
-      <h2>{copy.howRankingWorks}</h2>
-      <div className="methodology-list">
-        {METHODOLOGY_ITEMS.map((item) => {
-          const Icon = item.icon
-          const itemCopy = copy.methodology[item.key]
-          return (
-            <div className="methodology-item" key={item.key}>
-              <Icon aria-hidden="true" />
-              <div>
-                <h3>{itemCopy.title}</h3>
-                <p>{itemCopy.description}</p>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-      <Separator />
-      <p className="methodology-note">{copy.methodologyNote}</p>
-    </section>
+    <div className="repository-links">
+      <a
+        className={cn(buttonVariants({ variant: "outline" }), "repo-action")}
+        href={repository.url}
+        target="_blank"
+        rel="noreferrer"
+      >
+        <GitHubMark data-icon="inline-start" />
+        {copy.openRepository}
+        <ExternalLinkIcon aria-hidden="true" data-icon="inline-end" />
+      </a>
+      {repository.homepage ? (
+        <a
+          className={cn(buttonVariants({ variant: "ghost" }), "repo-action")}
+          href={repository.homepage}
+          target="_blank"
+          rel="noreferrer"
+        >
+          <LinkIcon aria-hidden="true" data-icon="inline-start" />
+          {copy.openHomepage}
+          <ExternalLinkIcon aria-hidden="true" data-icon="inline-end" />
+        </a>
+      ) : null}
+    </div>
   )
 }
 
@@ -832,6 +1093,7 @@ function RankingWorkspace({
               {selected.fullName} / {PERIOD_LABELS[locale][period]}{" "}
               {copy.growth}
             </p>
+            <RepositoryLinks locale={locale} repository={selected} />
             <MomentumChart
               repository={selected}
               period={period}
@@ -841,7 +1103,11 @@ function RankingWorkspace({
               <span aria-hidden="true" /> {copy.starsGained}
             </div>
           </section>
-          <MethodologyPanel locale={locale} />
+          <ProjectInsightPanel
+            locale={locale}
+            period={period}
+            repository={selected}
+          />
         </aside>
       ) : null}
     </div>
@@ -854,7 +1120,7 @@ function AppFooter({ locale }: { locale: Locale }) {
   return (
     <footer className="app-footer">
       <div>
-        <InfoIcon aria-hidden="true" />
+        <CompassIcon aria-hidden="true" />
         <span>{copy.footer}</span>
       </div>
     </footer>
@@ -921,7 +1187,7 @@ export function RepoPulseDashboard({
     setQuery("")
     setLanguage("all")
     setTopic("all")
-    setSort("stars")
+    setSort("momentum")
     updateUrlParameter("q", "")
     updateUrlParameter("language", "")
     updateUrlParameter("topic", "")
@@ -975,7 +1241,7 @@ export function RepoPulseDashboard({
               }}
               onSortChange={(value) => {
                 setSort(value)
-                updateUrlParameter("sort", value, "stars")
+                updateUrlParameter("sort", value, "momentum")
               }}
               onTopicChange={(value) => {
                 setTopic(value)

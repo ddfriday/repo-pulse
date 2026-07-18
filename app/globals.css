@@ -92,7 +92,6 @@
 
 .repo-shell {
   min-height: 100svh;
-  overflow-x: clip;
   background: var(--background);
 }
 
@@ -416,11 +415,11 @@
 }
 
 .ranking-header,
-.repository-row {
+.repository-row-shell {
   display: grid;
   grid-template-columns:
     68px minmax(270px, 1.6fr) minmax(112px, 0.58fr) minmax(112px, 0.58fr)
-    minmax(132px, 0.7fr);
+    minmax(132px, 0.7fr) 44px;
   align-items: center;
   gap: 14px;
 }
@@ -438,6 +437,10 @@
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.ranking-list li {
+  position: relative;
 }
 
 .ranking-list li:not(:last-child) {
@@ -459,7 +462,7 @@
   color: #064bd7;
 }
 
-.repository-row {
+.repository-row-shell {
   position: relative;
   width: 100%;
   min-height: 79px;
@@ -473,17 +476,29 @@
     box-shadow 140ms ease;
 }
 
-.repository-row:hover {
+.repository-row-select {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  right: 44px;
+  bottom: 0;
+  left: 0;
+  border: 0;
+  background: transparent;
+}
+
+.repository-row-shell:hover,
+.repository-row-select:hover + .repository-row-shell {
   background: #f8fbff;
 }
 
-.repository-row:focus-visible {
+.repository-row-select:focus-visible + .repository-row-shell {
   z-index: 2;
   outline: 3px solid color-mix(in srgb, var(--selection) 35%, transparent);
   outline-offset: -3px;
 }
 
-.repository-row[data-selected="true"] {
+.repository-row-shell[data-selected="true"] {
   z-index: 1;
   background: #f4f8ff;
   box-shadow:
@@ -500,7 +515,7 @@
   text-align: center;
 }
 
-.repository-row[data-selected="true"] .repository-rank {
+.repository-row-shell[data-selected="true"] .repository-rank {
   color: var(--selection);
 }
 
@@ -630,8 +645,41 @@
   stroke-width: 1.4;
 }
 
+.repository-row-link {
+  position: relative;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #dfe5ee;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #44546a;
+  justify-self: center;
+  text-decoration: none;
+  transition:
+    border-color 140ms ease,
+    background 140ms ease,
+    color 140ms ease;
+}
+
+.repository-row-link:hover,
+.repository-row-link:focus-visible {
+  border-color: color-mix(in srgb, var(--selection) 42%, var(--border));
+  background: #f2f7ff;
+  color: var(--selection);
+}
+
+.repository-row-link svg {
+  width: 15px;
+  height: 15px;
+}
+
 .insight-rail {
   display: flex;
+  align-self: stretch;
   flex-direction: column;
   gap: 18px;
   margin-top: -295px;
@@ -660,6 +708,12 @@
   font-size: 0.85rem;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.momentum-panel {
+  position: sticky;
+  z-index: 5;
+  top: 18px;
 }
 
 .repository-links {
@@ -1043,9 +1097,17 @@
   }
 
   .insight-rail {
+    position: static;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-height: none;
     margin-top: 0;
+    overflow: visible;
+  }
+
+  .momentum-panel {
+    position: relative;
+    top: auto;
   }
 }
 
@@ -1201,8 +1263,8 @@
   }
 
   .ranking-header,
-  .repository-row {
-    grid-template-columns: 26px minmax(106px, 1fr) 62px 58px 74px;
+  .repository-row-shell {
+    grid-template-columns: 26px minmax(100px, 1fr) 58px 52px 64px 34px;
     gap: 7px;
   }
 
@@ -1222,9 +1284,13 @@
     content: "#";
   }
 
-  .repository-row {
+  .repository-row-shell {
     min-height: 88px;
     padding: 12px 8px;
+  }
+
+  .repository-row-select {
+    right: 34px;
   }
 
   .repository-glyph,
@@ -1265,6 +1331,12 @@
     min-width: 66px;
     width: 74px;
     height: 34px;
+  }
+
+  .repository-row-link {
+    width: 31px;
+    height: 31px;
+    border-radius: 7px;
   }
 
   .insight-panel {
@@ -1345,13 +1417,13 @@
   }
 
   .ranking-header,
-  .repository-row {
-    grid-template-columns: 22px minmax(96px, 1fr) 54px 50px 65px;
+  .repository-row-shell {
+    grid-template-columns: 22px minmax(88px, 1fr) 50px 46px 56px 31px;
     gap: 5px;
   }
 
   .ranking-header,
-  .repository-row {
+  .repository-row-shell {
     padding-inline: 4px;
   }
 
@@ -1367,6 +1439,15 @@
   .sparkline {
     min-width: 58px;
     width: 64px;
+  }
+
+  .repository-row-select {
+    right: 31px;
+  }
+
+  .repository-row-link {
+    width: 28px;
+    height: 28px;
   }
 }
 

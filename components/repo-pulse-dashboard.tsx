@@ -168,6 +168,7 @@ const COPY = {
     rankingDetails: "Ranking details",
     momentumOverview: "Discovery overview",
     openRepository: "Open repository",
+    openRepositoryShort: "Open",
     openHomepage: "Open homepage",
     growth: "growth",
     aiInsightEyebrow: "Project read",
@@ -252,6 +253,7 @@ const COPY = {
     rankingDetails: "排行榜详情",
     momentumOverview: "发现分概览",
     openRepository: "打开仓库",
+    openRepositoryShort: "打开",
     openHomepage: "打开主页",
     growth: "增长",
     aiInsightEyebrow: "项目内容识别",
@@ -732,10 +734,19 @@ function RepositoryRow({
     <li data-overflow={overflow || undefined}>
       <button
         aria-pressed={selected}
-        className="repository-row"
+        aria-label={
+          locale === "zh"
+            ? "查看 " + repository.fullName + " 的详情"
+            : "Show details for " + repository.fullName
+        }
+        className="repository-row-select"
         data-selected={selected || undefined}
         onClick={onSelect}
         type="button"
+      />
+      <div
+        className="repository-row-shell"
+        data-selected={selected || undefined}
       >
         <span className="repository-rank">{rank}</span>
         <span className="repository-identity">
@@ -770,7 +781,17 @@ function RepositoryRow({
           values={repository.trend}
           label={repository.fullName + " " + copy.growthTrend}
         />
-      </button>
+        <a
+          aria-label={copy.openRepository + ": " + repository.fullName}
+          className="repository-row-link"
+          href={repository.url}
+          target="_blank"
+          rel="noreferrer"
+          title={copy.openRepository}
+        >
+          <ExternalLinkIcon aria-hidden="true" />
+        </a>
+      </div>
     </li>
   )
 }
@@ -1039,6 +1060,7 @@ function RankingWorkspace({
               <span>{copy.starsGained}</span>
               <span>{copy.forksGained}</span>
               <span>{copy.trend}</span>
+              <span>{copy.openRepositoryShort}</span>
             </div>
             <ol className="ranking-list">
               {items.map((repository, index) => (

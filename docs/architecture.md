@@ -6,7 +6,7 @@ RepoPulse separates collection, storage, and presentation so credentials never n
 flowchart LR
   A[GitHub Actions] -->|short-lived GITHUB_TOKEN| B[GitHub REST API]
   B --> C[Candidate repository set]
-  C --> D[(Supabase Postgres)]
+  C -->|optional server-side AI read| D[(Supabase Postgres)]
   D -->|anon read + RLS| E[Next.js Server Components]
   E --> F[Browser]
 ```
@@ -15,13 +15,17 @@ flowchart LR
 
 `scripts/collect.ts` runs in GitHub Actions. It uses the job-scoped `GITHUB_TOKEN` to query public repository metadata and a Supabase service-role key to write batches. Neither credential is available to the Next.js client bundle.
 
-The collector currently uses three bounded searches:
+When `AI_PROJECT_INSIGHTS_ENABLED=true`, the collector can also fetch README excerpts for the top candidate repositories and call a server-side OpenAI-compatible model such as SenseNova or DeepSeek. The model key stays in Actions secrets, and only the generated category, summary, audience, reason, and signals are stored as public read data.
 
-- established repositories pushed recently;
-- new repositories with early star traction;
-- recently active AI repositories.
+The collector uses a broader set of bounded searches:
 
-Results are deduplicated and capped with `MAX_REPOSITORIES`. The site should therefore say “tracked repositories” until a more comprehensive event source is introduced.
+- repositories created in the last two weeks with early traction;
+- repositories created in the last month below the mega-repository range;
+- active repositories created in the last quarter;
+- small repositories pushed in the last week;
+- recent AI, agent, LLM, MCP, and developer-tool repositories.
+
+Results are deduplicated, scored with a discovery heuristic, and capped with `MAX_REPOSITORIES`. The heuristic considers repository age, recent activity, early star velocity, and traction while penalizing very large established repositories. The site should therefore say “tracked repositories” until a more comprehensive event source is introduced.
 
 ## Read boundary
 
@@ -32,6 +36,7 @@ The Next.js page loads daily, weekly, and monthly rankings in parallel through t
 - Missing public Supabase variables: render the labeled sample dataset.
 - Empty or failed ranking RPC: render the labeled sample dataset and log a server warning.
 - Missing Actions secrets: skip scheduled collection without failing the workflow.
+- Missing or disabled AI model variables: skip model enrichment and keep metadata-derived project reads in the UI.
 - Missing historical baseline: return zero growth until enough snapshots exist.
 
 ## Future scaling path

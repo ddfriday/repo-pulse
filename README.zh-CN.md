@@ -2,22 +2,22 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-通过 Star、Fork、活跃度和增长趋势，发现热门及正在崛起的 GitHub 项目。
+通过早期增长、新鲜度、活跃度和趋势，发现新的、正在崛起的 GitHub 项目。
 
-RepoPulse 是一个开源的 GitHub 仓库发现面板。它会持续记录公开仓库的时间快照，让开发者能够比较每日、每周和每月的增长势头，而不仅仅查看项目累计获得的 Star 数量。
+RepoPulse 是一个开源的 GitHub 仓库发现面板。它会持续记录公开仓库的时间快照，让开发者能够比较每日、每周和每月的增长势头，同时降低老牌超大项目在累计 Star 上的天然优势。
 
 ![RepoPulse 桌面端设计概念](docs/design/repo-pulse-desktop-concept.png)
 
 ## 主要功能
 
-- 每日、每周和每月排行榜
-- Star 增长、Fork 增长及可解释的增长势头排序
+- 每日、每周和每月新锐项目视图
+- Star 增长、Fork 增长、早期速度、新鲜度及可解释的发现分排序
 - 仓库搜索、编程语言筛选和 Topic 筛选
 - 中英文界面切换，语言状态可通过 URL 分享
 - 响应式桌面端和移动端布局
 - 筛选条件同步到 URL，便于分享当前视图
 - 带 RLS 和快照查询索引的 Supabase 数据结构
-- GitHub Actions 每 6 小时自动采集一次
+- GitHub Actions 每 6 小时自动采集一次，并扩大新项目候选池
 - 配置 Supabase 前使用有明确标记的示例数据回退
 
 ## 系统架构
@@ -87,7 +87,27 @@ SUPABASE_SERVICE_ROLE_KEY
 npm run collect
 ```
 
-采集器通过 GitHub Search 获取数量受控的候选仓库，完成去重和批量写入，并为每个仓库每小时最多记录一份快照。定时工作流每 6 小时运行一次；在 Supabase Secrets 尚未配置时会安全跳过采集。
+采集器通过 GitHub Search 获取数量受控的候选仓库，完成去重、发现分排序和批量写入，并为每个仓库每小时最多记录一份快照。它会优先考虑新创建仓库、近期 push、早期 Star 速度，以及 AI/开发工具等新兴 Topic，而不是简单保留累计 Star 最高的大仓库。定时工作流每 6 小时运行一次；在 Supabase Secrets 尚未配置时会安全跳过采集。
+
+## AI 模型
+
+RepoPulse 的核心排行榜不需要 AI 大模型。GitHub Search、仓库元数据、Supabase 快照和 Postgres 排名函数已经可以完成发现与排序。
+
+采集器可以可选调用兼容 OpenAI 的模型，读取仓库元数据和 README 片段，再把结构化项目识别结果写回 Supabase。模型 Key 只放服务端。SenseNova 可使用 `https://token.sensenova.cn/v1` 和 `sensenova-6.7-flash-lite`；DeepSeek 可继续使用 DeepSeek 兼容配置。
+
+```text
+AI_PROJECT_INSIGHTS_ENABLED
+AI_PROJECT_INSIGHTS_LIMIT
+AI_PROJECT_INSIGHTS_API_KEY
+AI_PROJECT_INSIGHTS_BASE_URL
+AI_PROJECT_INSIGHTS_MODEL
+SENSENOVA_API_KEY
+SENSENOVA_BASE_URL
+SENSENOVA_MODEL
+DEEPSEEK_API_KEY
+DEEPSEEK_BASE_URL
+DEEPSEEK_MODEL
+```
 
 ## 排名说明
 

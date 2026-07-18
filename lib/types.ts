@@ -19,6 +19,13 @@ export type RankedRepository = {
   homepage: string | null
   language: string
   topics: string[]
+  aiCategory: string | null
+  aiSummary: string | null
+  aiAudience: string | null
+  aiReason: string | null
+  aiSignals: string[]
+  aiModel: string | null
+  aiEnrichedAt: string | null
   stars: number
   forks: number
   starGain: number

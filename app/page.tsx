@@ -35,7 +35,7 @@ export async function generateMetadata({
   if (locale === "zh") {
     const title = "RepoPulse — 发现正在崛起的 GitHub 项目"
     const description =
-      "通过 Star、Fork、版本发布和活跃度，发现热门及正在崛起的 GitHub 开源项目。"
+      "通过早期增长、新鲜度和活跃度，发现新的、正在崛起的 GitHub 开源项目。"
 
     return {
       title: { absolute: title },
@@ -47,7 +47,7 @@ export async function generateMetadata({
 
   const title = "RepoPulse — Discover rising GitHub repositories"
   const description =
-    "Discover rising and popular GitHub repositories through stars, forks, activity, and growth trends."
+    "Discover new and rising GitHub repositories through early traction, freshness, activity, and growth trends."
 
   return {
     title: { absolute: title },
@@ -73,7 +73,7 @@ export default async function Page({
     query: firstValue(query.q) ?? "",
     language: firstValue(query.language) ?? "all",
     topic: firstValue(query.topic) ?? "all",
-    sort: isSortKey(requestedSort) ? requestedSort : "stars",
+    sort: isSortKey(requestedSort) ? requestedSort : "momentum",
   }
 
   const [daily, weekly, monthly] = await Promise.all([

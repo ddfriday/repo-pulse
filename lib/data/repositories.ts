@@ -22,6 +22,13 @@ type RankingRow = {
   homepage: string | null
   language: string | null
   topics: string[] | null
+  ai_category: string | null
+  ai_summary: string | null
+  ai_audience: string | null
+  ai_reason: string | null
+  ai_signals: string[] | null
+  ai_model: string | null
+  ai_enriched_at: string | null
   stars_count: number
   forks_count: number
   star_gain: number
@@ -43,6 +50,13 @@ function toRepository(row: RankingRow): RankedRepository {
     homepage: row.homepage,
     language: row.language ?? "Other",
     topics: row.topics ?? [],
+    aiCategory: row.ai_category,
+    aiSummary: row.ai_summary,
+    aiAudience: row.ai_audience,
+    aiReason: row.ai_reason,
+    aiSignals: row.ai_signals ?? [],
+    aiModel: row.ai_model,
+    aiEnrichedAt: row.ai_enriched_at,
     stars: Number(row.stars_count),
     forks: Number(row.forks_count),
     starGain: Number(row.star_gain),

@@ -308,12 +308,17 @@ async function requestProjectInsight(
     })
 
     if (!response.ok) {
+      const errorDetails = (await response.text())
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 500)
       console.warn(
         provider.provider +
           " insight request failed for " +
           repository.full_name +
           ": HTTP " +
-          response.status
+          response.status +
+          (errorDetails ? " " + errorDetails : "")
       )
       return {
         canFallback: response.status === 429 || response.status >= 500,

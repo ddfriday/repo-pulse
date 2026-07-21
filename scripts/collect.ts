@@ -9,6 +9,8 @@ const configuredAiInsightLimit = Number(
   process.env.AI_PROJECT_INSIGHTS_LIMIT ?? 25
 )
 const aiInsightsEnabled = process.env.AI_PROJECT_INSIGHTS_ENABLED === "true"
+const aiInsightRefreshMs = 72 * 60 * 60 * 1000
+const aiRequestTimeoutMs = 15_000
 const maxRepositories = Math.min(
   Math.max(
     Number.isFinite(configuredMaxRepositories)
@@ -34,10 +36,16 @@ type SearchRepository = Awaited<
 >["data"]["items"][number]
 
 type AiInsightConfig = {
+  fallback: AiProviderConfig | null
+  limit: number
+  primary: AiProviderConfig
+}
+
+type AiProviderConfig = {
   apiKey: string
   baseUrl: string
-  limit: number
   model: string
+  provider: "deepseek" | "sensenova"
 }
 
 type ProjectInsight = {
@@ -47,6 +55,26 @@ type ProjectInsight = {
   signals: string[]
   summary: string
 }
+
+type LocalizedProjectInsight = {
+  en: ProjectInsight
+  zh: ProjectInsight
+}
+
+type GeneratedProjectInsight = {
+  content: LocalizedProjectInsight
+  model: string
+}
+
+type AiRequestResult =
+  | {
+      canFallback: false
+      content: LocalizedProjectInsight
+    }
+  | {
+      canFallback: boolean
+      content: null
+    }
 
 function isoDateDaysAgo(days: number) {
   const date = new Date()
@@ -70,37 +98,33 @@ function clamp(value: number, minimum: number, maximum: number) {
 function getAiInsightConfig(): AiInsightConfig | null {
   if (!aiInsightsEnabled) return null
 
-  const usesDeepSeek =
-    !process.env.AI_PROJECT_INSIGHTS_API_KEY &&
-    !process.env.SENSENOVA_API_KEY &&
-    Boolean(process.env.DEEPSEEK_API_KEY)
-  const apiKey =
-    process.env.AI_PROJECT_INSIGHTS_API_KEY ??
-    process.env.SENSENOVA_API_KEY ??
-    process.env.DEEPSEEK_API_KEY
+  const sensenovaApiKey = process.env.SENSENOVA_API_KEY
 
-  if (!apiKey) {
+  if (!sensenovaApiKey) {
     console.warn(
-      "AI project insights are enabled but no API key is configured."
+      "AI project insights are enabled but SENSENOVA_API_KEY is not configured."
     )
     return null
   }
 
   return {
-    apiKey,
-    baseUrl:
-      process.env.AI_PROJECT_INSIGHTS_BASE_URL ??
-      process.env.SENSENOVA_BASE_URL ??
-      process.env.DEEPSEEK_BASE_URL ??
-      (usesDeepSeek
-        ? "https://api.deepseek.com"
-        : "https://token.sensenova.cn/v1"),
+    fallback: process.env.DEEPSEEK_API_KEY
+      ? {
+          apiKey: process.env.DEEPSEEK_API_KEY,
+          baseUrl: process.env.DEEPSEEK_BASE_URL ?? "https://api.deepseek.com",
+          model: process.env.DEEPSEEK_MODEL ?? "deepseek-v4-flash",
+          provider: "deepseek",
+        }
+      : null,
     limit: clamp(configuredAiInsightLimit, 0, Math.min(maxRepositories, 100)),
-    model:
-      process.env.AI_PROJECT_INSIGHTS_MODEL ??
-      process.env.SENSENOVA_MODEL ??
-      process.env.DEEPSEEK_MODEL ??
-      (usesDeepSeek ? "deepseek-chat" : "sensenova-6.7-flash-lite"),
+    primary: {
+      apiKey: sensenovaApiKey,
+      baseUrl:
+        process.env.SENSENOVA_BASE_URL ??
+        "https://api.sensenova.cn/compatible-mode/v2",
+      model: process.env.SENSENOVA_MODEL ?? "SenseNova-V6.5-Turbo",
+      provider: "sensenova",
+    },
   }
 }
 
@@ -116,27 +140,20 @@ function repositoryOwner(repository: SearchRepository) {
 }
 
 function readJsonObject(text: string) {
-  const fencedJson = text.match(/```(?:json)?\s*([\s\S]*?)```/i)
-  const candidate = fencedJson?.[1] ?? text
-  const start = candidate.indexOf("{")
-  const end = candidate.lastIndexOf("}")
-
-  if (start === -1 || end === -1 || end <= start) return null
-
   try {
-    return JSON.parse(candidate.slice(start, end + 1)) as Record<
-      string,
-      unknown
-    >
+    const value: unknown = JSON.parse(text)
+    return value && typeof value === "object"
+      ? (value as Record<string, unknown>)
+      : null
   } catch {
     return null
   }
 }
 
-function textField(value: unknown, fallback: string, maxLength: number) {
-  if (typeof value !== "string") return fallback
+function textField(value: unknown, maxLength: number) {
+  if (typeof value !== "string") return null
   const normalized = value.replace(/\s+/g, " ").trim()
-  if (!normalized) return fallback
+  if (!normalized) return null
   return normalized.slice(0, maxLength)
 }
 
@@ -151,33 +168,37 @@ function normalizeSignals(value: unknown) {
 }
 
 function normalizeProjectInsight(
-  value: Record<string, unknown>,
-  repository: SearchRepository
-): ProjectInsight {
-  const fallbackCategory =
-    repository.topics?.find((topic) => topic.length > 2) ??
-    repository.language ??
-    "Open source project"
-  const fallbackSummary =
-    repository.description ??
-    "No clear project description was available from GitHub metadata."
+  value: Record<string, unknown>
+): ProjectInsight | null {
+  const audience = textField(value.audience, 90)
+  const category = textField(value.category, 70)
+  const reason = textField(value.reason, 180)
   const signals = normalizeSignals(value.signals)
+  const summary = textField(value.summary, 220)
+
+  if (!audience || !category || !reason || !signals.length || !summary) {
+    return null
+  }
 
   return {
-    audience: textField(value.audience, "Developers exploring new tools", 90),
-    category: textField(value.category, fallbackCategory, 70),
-    reason: textField(
-      value.reason,
-      "Early traction and recent repository activity make it worth tracking.",
-      180
-    ),
-    signals: signals.length
-      ? signals
-      : [repository.language, ...(repository.topics ?? [])]
-          .filter((item): item is string => Boolean(item))
-          .slice(0, 5),
-    summary: textField(value.summary, fallbackSummary, 220),
+    audience,
+    category,
+    reason,
+    signals,
+    summary,
   }
+}
+
+function normalizeLocalizedProjectInsight(
+  value: Record<string, unknown>
+): LocalizedProjectInsight | null {
+  if (!value.en || typeof value.en !== "object") return null
+  if (!value.zh || typeof value.zh !== "object") return null
+
+  const en = normalizeProjectInsight(value.en as Record<string, unknown>)
+  const zh = normalizeProjectInsight(value.zh as Record<string, unknown>)
+
+  return en && zh ? { en, zh } : null
 }
 
 function extractAssistantContent(value: unknown) {
@@ -232,77 +253,195 @@ async function fetchRepositoryReadme(repository: SearchRepository) {
   return ""
 }
 
+async function requestProjectInsight(
+  provider: AiProviderConfig,
+  repository: SearchRepository,
+  readme: string
+): Promise<AiRequestResult> {
+  const providerOptions =
+    provider.provider === "sensenova"
+      ? { max_completion_tokens: 1200 }
+      : {
+          max_tokens: 1200,
+          response_format: { type: "json_object" },
+          thinking: { type: "disabled" },
+        }
+
+  try {
+    const response = await fetch(chatCompletionUrl(provider.baseUrl), {
+      body: JSON.stringify({
+        messages: [
+          {
+            role: "system",
+            content:
+              "You classify GitHub repositories for a discovery dashboard. Return one JSON object with complete English and Simplified Chinese project insights.",
+          },
+          {
+            role: "user",
+            content:
+              'Return exactly this JSON shape: {"en":{"category":"","summary":"","audience":"","reason":"","signals":[""]},"zh":{"category":"","summary":"","audience":"","reason":"","signals":[""]}}. Keep category under 70 characters, summary under 220 characters, audience under 90 characters, reason under 180 characters, and provide 3 to 5 short signals per language. Do not add markdown.\n\nRepository: ' +
+              repository.full_name +
+              "\nLanguage: " +
+              (repository.language ?? "Unknown") +
+              "\nStars: " +
+              repository.stargazers_count +
+              "\nForks: " +
+              repository.forks_count +
+              "\nTopics: " +
+              (repository.topics ?? []).join(", ") +
+              "\nDescription: " +
+              (repository.description ?? "No description") +
+              "\nREADME excerpt:\n" +
+              readme,
+          },
+        ],
+        model: provider.model,
+        ...providerOptions,
+        temperature: 0.2,
+      }),
+      headers: {
+        Authorization: "Bearer " + provider.apiKey,
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+      signal: AbortSignal.timeout(aiRequestTimeoutMs),
+    })
+
+    if (!response.ok) {
+      console.warn(
+        provider.provider +
+          " insight request failed for " +
+          repository.full_name +
+          ": HTTP " +
+          response.status
+      )
+      return {
+        canFallback: response.status === 429 || response.status >= 500,
+        content: null,
+      }
+    }
+
+    const content = extractAssistantContent(await response.json())
+    const parsed = content ? readJsonObject(content) : null
+    const normalized = parsed ? normalizeLocalizedProjectInsight(parsed) : null
+
+    if (!normalized) {
+      console.warn(
+        provider.provider +
+          " returned an invalid insight for " +
+          repository.full_name
+      )
+      return { canFallback: false, content: null }
+    }
+
+    return { canFallback: false, content: normalized }
+  } catch (error) {
+    console.warn(
+      provider.provider +
+        " insight request failed for " +
+        repository.full_name +
+        ": " +
+        (error instanceof Error ? error.message : "network error")
+    )
+    return { canFallback: true, content: null }
+  }
+}
+
 async function generateProjectInsight(
   config: AiInsightConfig,
   repository: SearchRepository
-) {
+): Promise<GeneratedProjectInsight | null> {
   const readme = (await fetchRepositoryReadme(repository)).slice(0, 5000)
-  const response = await fetch(chatCompletionUrl(config.baseUrl), {
-    body: JSON.stringify({
-      max_tokens: 600,
-      messages: [
-        {
-          role: "system",
-          content:
-            "You classify GitHub repositories for a discovery dashboard. Return only compact JSON.",
-        },
-        {
-          role: "user",
-          content:
-            "Identify what this project does. Return JSON with category, summary, audience, reason, and signals as an array of short strings.\n\nRepository: " +
-            repository.full_name +
-            "\nLanguage: " +
-            (repository.language ?? "Unknown") +
-            "\nStars: " +
-            repository.stargazers_count +
-            "\nForks: " +
-            repository.forks_count +
-            "\nTopics: " +
-            (repository.topics ?? []).join(", ") +
-            "\nDescription: " +
-            (repository.description ?? "No description") +
-            "\nREADME excerpt:\n" +
-            readme,
-        },
-      ],
-      model: config.model,
-      temperature: 0.2,
-    }),
-    headers: {
-      Authorization: "Bearer " + config.apiKey,
-      "Content-Type": "application/json",
-    },
-    method: "POST",
-  })
+  const primary = await requestProjectInsight(
+    config.primary,
+    repository,
+    readme
+  )
 
-  if (!response.ok) {
-    console.warn(
-      "AI insight request failed for " +
-        repository.full_name +
-        ": HTTP " +
-        response.status
-    )
-    return null
+  if (primary.content) {
+    return { content: primary.content, model: config.primary.model }
   }
 
-  const content = extractAssistantContent(await response.json())
-  if (!content) return null
-  const parsed = readJsonObject(content)
+  if (!primary.canFallback || !config.fallback) return null
 
-  return parsed ? normalizeProjectInsight(parsed, repository) : null
+  console.warn("Retrying AI insight with DeepSeek for " + repository.full_name)
+  const fallback = await requestProjectInsight(
+    config.fallback,
+    repository,
+    readme
+  )
+
+  return fallback.content
+    ? { content: fallback.content, model: config.fallback.model }
+    : null
+}
+
+async function repositoriesDueForAi(
+  repositories: SearchRepository[],
+  limit: number,
+  capturedAt: Date
+) {
+  const candidates = repositories.slice(0, limit)
+  if (!candidates.length) return []
+
+  const { data, error } = await supabase
+    .from("repositories")
+    .select("id,ai_enriched_at")
+    .in(
+      "id",
+      candidates.map((repository) => repository.id)
+    )
+
+  if (error) {
+    throw new Error("AI insight refresh lookup failed: " + error.message)
+  }
+
+  const enrichedAtById = new Map<number, string | null>(
+    (data ?? []).map((row) => [Number(row.id), row.ai_enriched_at])
+  )
+
+  return candidates.filter((repository) => {
+    const enrichedAt = enrichedAtById.get(repository.id)
+    if (!enrichedAt) return true
+
+    const enrichedAtMs = Date.parse(enrichedAt)
+    return (
+      !Number.isFinite(enrichedAtMs) ||
+      capturedAt.getTime() - enrichedAtMs > aiInsightRefreshMs
+    )
+  })
 }
 
 async function collectProjectInsights(
   config: AiInsightConfig,
-  repositories: SearchRepository[]
+  repositories: SearchRepository[],
+  capturedAt: Date
 ) {
-  const insights = new Map<number, ProjectInsight>()
+  const insights = new Map<number, GeneratedProjectInsight>()
+  const dueRepositories = await repositoriesDueForAi(
+    repositories,
+    config.limit,
+    capturedAt
+  )
 
-  for (const repository of repositories.slice(0, config.limit)) {
+  console.log(
+    "AI insight refresh selected " +
+      dueRepositories.length +
+      " of " +
+      Math.min(repositories.length, config.limit) +
+      " ranked candidates"
+  )
+
+  for (const repository of dueRepositories) {
     const insight = await generateProjectInsight(config, repository)
     if (insight) {
       insights.set(repository.id, insight)
-      console.log("Generated AI insight for " + repository.full_name)
+      console.log(
+        "Generated AI insight for " +
+          repository.full_name +
+          " with " +
+          insight.model
+      )
     }
   }
 
@@ -518,8 +657,8 @@ capturedAt.setUTCMinutes(0, 0, 0)
 const capturedAtIso = capturedAt.toISOString()
 const aiInsightConfig = getAiInsightConfig()
 const projectInsights = aiInsightConfig
-  ? await collectProjectInsights(aiInsightConfig, repositories)
-  : new Map<number, ProjectInsight>()
+  ? await collectProjectInsights(aiInsightConfig, repositories, capturedAt)
+  : new Map<number, GeneratedProjectInsight>()
 
 const repositoryRows = repositories.map((repository) => ({
   id: repository.id,
@@ -567,17 +706,22 @@ for (const batch of chunk(snapshotRows, 100)) {
 }
 
 if (aiInsightConfig && projectInsights.size) {
-  for (const [repositoryId, insight] of projectInsights) {
+  for (const [repositoryId, generated] of projectInsights) {
     const { error } = await supabase
       .from("repositories")
       .update({
-        ai_audience: insight.audience,
-        ai_category: insight.category,
+        ai_audience: generated.content.en.audience,
+        ai_audience_zh: generated.content.zh.audience,
+        ai_category: generated.content.en.category,
+        ai_category_zh: generated.content.zh.category,
         ai_enriched_at: capturedAtIso,
-        ai_model: aiInsightConfig.model,
-        ai_reason: insight.reason,
-        ai_signals: insight.signals,
-        ai_summary: insight.summary,
+        ai_model: generated.model,
+        ai_reason: generated.content.en.reason,
+        ai_reason_zh: generated.content.zh.reason,
+        ai_signals: generated.content.en.signals,
+        ai_signals_zh: generated.content.zh.signals,
+        ai_summary: generated.content.en.summary,
+        ai_summary_zh: generated.content.zh.summary,
       })
       .eq("id", repositoryId)
 

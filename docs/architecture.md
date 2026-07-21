@@ -15,7 +15,7 @@ flowchart LR
 
 `scripts/collect.ts` runs in GitHub Actions. It uses the job-scoped `GITHUB_TOKEN` to query public repository metadata and a Supabase service-role key to write batches. Neither credential is available to the Next.js client bundle.
 
-When `AI_PROJECT_INSIGHTS_ENABLED=true`, the collector can also fetch README excerpts for the top candidate repositories and call a server-side OpenAI-compatible model such as SenseNova or DeepSeek. The model key stays in Actions secrets, and only the generated category, summary, audience, reason, and signals are stored as public read data.
+When `AI_PROJECT_INSIGHTS_ENABLED=true`, the collector checks the top 25 discovery candidates and generates insights only when a repository has no prior result or the stored result is older than 72 hours. SenseNova is the primary server-side model. Network timeouts, HTTP 429 responses, and HTTP 5xx responses can retry once with DeepSeek. Both English and Simplified Chinese category, summary, audience, reason, and signals are stored as public read data. Model keys stay in Actions secrets.
 
 The collector uses a broader set of bounded searches:
 
@@ -37,6 +37,8 @@ The Next.js page loads daily, weekly, and monthly rankings in parallel through t
 - Empty or failed ranking RPC: render the labeled sample dataset and log a server warning.
 - Missing Actions secrets: skip scheduled collection without failing the workflow.
 - Missing or disabled AI model variables: skip model enrichment and keep metadata-derived project reads in the UI.
+- SenseNova availability failure with DeepSeek configured: retry the repository once with DeepSeek.
+- Both model requests fail: keep the last successful insight and leave its enrichment timestamp unchanged.
 - Missing historical baseline: return zero growth until enough snapshots exist.
 
 ## Future scaling path

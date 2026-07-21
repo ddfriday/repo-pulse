@@ -93,14 +93,11 @@ npm run collect
 
 RepoPulse 的核心排行榜不需要 AI 大模型。GitHub Search、仓库元数据、Supabase 快照和 Postgres 排名函数已经可以完成发现与排序。
 
-采集器可以可选调用兼容 OpenAI 的模型，读取仓库元数据和 README 片段，再把结构化项目识别结果写回 Supabase。模型 Key 只放服务端。SenseNova 可使用 `https://token.sensenova.cn/v1` 和 `sensenova-6.7-flash-lite`；DeepSeek 可继续使用 DeepSeek 兼容配置。
+采集器可以可选读取排名前 25 的候选仓库元数据和 README 片段，再把中英文结构化项目识别结果写回 Supabase。SenseNova 使用 `SenseNova-V6.5-Turbo` 作为主模型；遇到超时、限流或服务端异常时，可使用 `deepseek-v4-flash` 重试一次。已有结果超过 72 小时才会重新生成，模型 Key 始终只放服务端。
 
 ```text
 AI_PROJECT_INSIGHTS_ENABLED
 AI_PROJECT_INSIGHTS_LIMIT
-AI_PROJECT_INSIGHTS_API_KEY
-AI_PROJECT_INSIGHTS_BASE_URL
-AI_PROJECT_INSIGHTS_MODEL
 SENSENOVA_API_KEY
 SENSENOVA_BASE_URL
 SENSENOVA_MODEL

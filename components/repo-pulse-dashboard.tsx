@@ -14,6 +14,7 @@ import {
   ChevronUpIcon,
   Code2Icon,
   CompassIcon,
+  CpuIcon,
   ExternalLinkIcon,
   LanguagesIcon,
   LinkIcon,
@@ -21,8 +22,10 @@ import {
   SearchIcon,
   SearchXIcon,
   SlidersHorizontalIcon,
+  SparklesIcon,
   StarIcon,
   TagIcon,
+  UsersIcon,
   type LucideIcon,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -53,7 +56,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
 import {
   Sheet,
   SheetClose,
@@ -172,14 +174,16 @@ const COPY = {
     growth: "growth",
     aiInsightEyebrow: "Project read",
     aiInsightTitle: "AI project insight",
-    aiInsightSourceAi: "Model",
+    aiInsightSourceAi: "AI model",
     aiInsightSourceMetadata: "Metadata",
+    aiSummaryLabel: "Project brief",
     aiCategory: "Type",
     aiAudience: "Audience",
     aiReason: "Why now",
     aiSignals: "Signals",
-    aiModelPending: "Metadata read now; README model pass next.",
+    aiModelPending: "Waiting for the first README analysis.",
     aiModelName: "Model",
+    aiUpdated: "Updated",
     aiCategoryLabels: {
       aiAgent: "AI / agent app",
       automation: "Automation workflow",
@@ -256,14 +260,16 @@ const COPY = {
     growth: "增长",
     aiInsightEyebrow: "项目内容识别",
     aiInsightTitle: "AI 项目识别",
-    aiInsightSourceAi: "模型",
+    aiInsightSourceAi: "AI 模型",
     aiInsightSourceMetadata: "元数据",
+    aiSummaryLabel: "项目简报",
     aiCategory: "类型",
     aiAudience: "适合人群",
     aiReason: "为什么值得看",
     aiSignals: "识别信号",
-    aiModelPending: "当前先读元数据；README 模型识别已接入采集链路。",
+    aiModelPending: "等待首次 README 模型识别。",
     aiModelName: "模型",
+    aiUpdated: "更新于",
     aiCategoryLabels: {
       aiAgent: "AI / 智能体应用",
       automation: "自动化工作流",
@@ -842,14 +848,30 @@ function projectInsight(
   const copy = COPY[locale]
   const categoryKey = classifyRepository(repository)
   const metadataCategory = copy.aiCategoryLabels[categoryKey]
-  const modelSignals = repository.aiSignals.filter(Boolean).slice(0, 5)
+  const localizedAi =
+    locale === "zh"
+      ? {
+          audience: repository.aiAudienceZh,
+          category: repository.aiCategoryZh,
+          reason: repository.aiReasonZh,
+          signals: repository.aiSignalsZh,
+          summary: repository.aiSummaryZh,
+        }
+      : {
+          audience: repository.aiAudience,
+          category: repository.aiCategory,
+          reason: repository.aiReason,
+          signals: repository.aiSignals,
+          summary: repository.aiSummary,
+        }
+  const modelSignals = localizedAi.signals.filter(Boolean).slice(0, 5)
   const source =
-    repository.aiSummary || repository.aiCategory || modelSignals.length
+    localizedAi.summary || localizedAi.category || modelSignals.length
       ? "ai"
       : "metadata"
-  const category = repository.aiCategory ?? metadataCategory
+  const category = localizedAi.category ?? metadataCategory
   const summary =
-    repository.aiSummary ??
+    localizedAi.summary ??
     (locale === "zh"
       ? "根据仓库描述、语言和 Topic，当前更像是「" +
         metadataCategory +
@@ -860,12 +882,12 @@ function projectInsight(
         metadataCategory.toLowerCase() +
         ".")
   const audience =
-    repository.aiAudience ??
+    localizedAi.audience ??
     (locale === "zh"
       ? "正在寻找新工具或新技术方向的开发者"
       : "Developers scanning for new tools or technical directions")
   const reason =
-    repository.aiReason ??
+    localizedAi.reason ??
     (locale === "zh"
       ? "本周期新增 " +
         compactNumber(repository.starGain, locale) +
@@ -905,29 +927,61 @@ function ProjectInsightPanel({
 }) {
   const copy = COPY[locale]
   const insight = projectInsight(locale, period, repository)
+  const providerName = repository.aiModel
+    ? repository.aiModel.toLowerCase().includes("deepseek")
+      ? "DeepSeek"
+      : "SenseNova"
+    : copy.aiInsightSourceMetadata
+  const modelNote = repository.aiModel
+    ? copy.aiModelName +
+      ": " +
+      repository.aiModel +
+      (repository.aiEnrichedAt
+        ? " · " +
+          copy.aiUpdated +
+          " " +
+          shortDate(repository.aiEnrichedAt, locale)
+        : "")
+    : copy.aiModelPending
 
   return (
-    <section className="insight-panel ai-insight-panel" id="ai-insight">
+    <section
+      className="insight-panel ai-insight-panel"
+      data-source={insight.source}
+      id="ai-insight"
+    >
       <div className="ai-insight-kicker">
         <span>
           <BotIcon aria-hidden="true" />
           {copy.aiInsightEyebrow}
         </span>
-        <Badge variant="secondary">
+        <Badge data-source={insight.source} variant="secondary">
           {insight.source === "ai"
-            ? copy.aiInsightSourceAi
+            ? providerName
             : copy.aiInsightSourceMetadata}
         </Badge>
       </div>
       <h2>{copy.aiInsightTitle}</h2>
-      <p className="ai-insight-summary">{insight.summary}</p>
+      <div className="ai-insight-lead">
+        <span>
+          <SparklesIcon aria-hidden="true" />
+          {copy.aiSummaryLabel}
+        </span>
+        <p className="ai-insight-summary">{insight.summary}</p>
+      </div>
       <dl className="ai-insight-facts">
         <div>
-          <dt>{copy.aiCategory}</dt>
+          <dt>
+            <TagIcon aria-hidden="true" />
+            {copy.aiCategory}
+          </dt>
           <dd>{insight.category}</dd>
         </div>
         <div>
-          <dt>{copy.aiAudience}</dt>
+          <dt>
+            <UsersIcon aria-hidden="true" />
+            {copy.aiAudience}
+          </dt>
           <dd>{insight.audience}</dd>
         </div>
       </dl>
@@ -939,15 +993,16 @@ function ProjectInsightPanel({
           ))}
         </div>
       </div>
-      <Separator />
-      <p className="ai-reason">
-        <strong>{copy.aiReason}</strong>
-        {insight.reason}
-      </p>
+      <div className="ai-reason">
+        <strong>
+          <SparklesIcon aria-hidden="true" />
+          {copy.aiReason}
+        </strong>
+        <p>{insight.reason}</p>
+      </div>
       <p className="ai-model-note">
-        {repository.aiModel
-          ? copy.aiModelName + ": " + repository.aiModel
-          : copy.aiModelPending}
+        <CpuIcon aria-hidden="true" />
+        <span>{modelNote}</span>
       </p>
     </section>
   )

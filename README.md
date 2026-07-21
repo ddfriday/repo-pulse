@@ -86,14 +86,11 @@ The collector discovers a bounded candidate pool through GitHub Search, deduplic
 
 RepoPulse does not need an AI model for the core ranking flow. GitHub Search, repository metadata, Supabase snapshots, and the Postgres ranking function are enough to discover and rank repositories.
 
-The collector can optionally call an OpenAI-compatible model to read repository metadata plus a README excerpt and write structured project insights back to Supabase. Keep model keys server-only. SenseNova can use `https://token.sensenova.cn/v1` with `sensenova-6.7-flash-lite`; DeepSeek can use the existing DeepSeek-compatible settings.
+The collector can optionally read repository metadata plus a README excerpt for the top 25 discovery candidates and write bilingual structured insights back to Supabase. SenseNova uses `SenseNova-V6.5-Turbo` as the primary model. Timeouts, rate limits, and server errors can retry once with `deepseek-v4-flash`. Existing insights refresh only after 72 hours, and model keys remain server-only.
 
 ```text
 AI_PROJECT_INSIGHTS_ENABLED
 AI_PROJECT_INSIGHTS_LIMIT
-AI_PROJECT_INSIGHTS_API_KEY
-AI_PROJECT_INSIGHTS_BASE_URL
-AI_PROJECT_INSIGHTS_MODEL
 SENSENOVA_API_KEY
 SENSENOVA_BASE_URL
 SENSENOVA_MODEL

@@ -20,10 +20,15 @@ export type RankedRepository = {
   language: string
   topics: string[]
   aiCategory: string | null
+  aiCategoryZh: string | null
   aiSummary: string | null
+  aiSummaryZh: string | null
   aiAudience: string | null
+  aiAudienceZh: string | null
   aiReason: string | null
+  aiReasonZh: string | null
   aiSignals: string[]
+  aiSignalsZh: string[]
   aiModel: string | null
   aiEnrichedAt: string | null
   stars: number

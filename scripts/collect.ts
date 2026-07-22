@@ -326,15 +326,22 @@ async function requestProjectInsight(
       }
     }
 
-    const content = extractAssistantContent(await response.json())
+    const responseBody: unknown = await response.json()
+    const content = extractAssistantContent(responseBody)
     const parsed = content ? readJsonObject(content) : null
     const normalized = parsed ? normalizeLocalizedProjectInsight(parsed) : null
 
     if (!normalized) {
+      const contentPreview = (content ?? JSON.stringify(responseBody))
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 500)
       console.warn(
         provider.provider +
           " returned an invalid insight for " +
-          repository.full_name
+          repository.full_name +
+          ": " +
+          contentPreview
       )
       return { canFallback: false, content: null }
     }

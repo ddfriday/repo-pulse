@@ -121,8 +121,8 @@ function getAiInsightConfig(): AiInsightConfig | null {
       apiKey: sensenovaApiKey,
       baseUrl:
         process.env.SENSENOVA_BASE_URL ??
-        "https://api.sensenova.cn/compatible-mode/v2",
-      model: process.env.SENSENOVA_MODEL ?? "SenseNova-V6.5-Turbo",
+        "https://token.sensenova.cn/v1",
+      model: process.env.SENSENOVA_MODEL ?? "sensenova-6.7-flash-lite",
       provider: "sensenova",
     },
   }
@@ -260,7 +260,7 @@ async function requestProjectInsight(
 ): Promise<AiRequestResult> {
   const providerOptions =
     provider.provider === "sensenova"
-      ? { max_completion_tokens: 1200 }
+      ? { max_tokens: 1200 }
       : {
           max_tokens: 1200,
           response_format: { type: "json_object" },

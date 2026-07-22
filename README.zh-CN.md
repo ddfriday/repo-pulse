@@ -93,7 +93,7 @@ npm run collect
 
 RepoPulse 的核心排行榜不需要 AI 大模型。GitHub Search、仓库元数据、Supabase 快照和 Postgres 排名函数已经可以完成发现与排序。
 
-采集器可以可选读取排名前 25 的候选仓库元数据和 README 片段，再把中英文结构化项目识别结果写回 Supabase。SenseNova 使用 `SenseNova-V6.5-Turbo` 作为主模型；遇到超时、限流或服务端异常时，可使用 `deepseek-v4-flash` 重试一次。已有结果超过 72 小时才会重新生成，模型 Key 始终只放服务端。
+采集器可以可选读取排名前 25 的候选仓库元数据和 README 片段，再把中英文结构化项目识别结果写回 Supabase。SenseNova Token Plan 使用 `sensenova-6.7-flash-lite` 作为主模型；遇到超时、限流或服务端异常时，可使用 `deepseek-v4-flash` 重试一次。已有结果超过 72 小时才会重新生成，模型 Key 始终只放服务端。
 
 ```text
 AI_PROJECT_INSIGHTS_ENABLED

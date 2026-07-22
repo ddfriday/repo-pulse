@@ -15,7 +15,7 @@ flowchart LR
 
 `scripts/collect.ts` runs in GitHub Actions. It uses the job-scoped `GITHUB_TOKEN` to query public repository metadata and a Supabase service-role key to write batches. Neither credential is available to the Next.js client bundle.
 
-When `AI_PROJECT_INSIGHTS_ENABLED=true`, the collector checks the top 25 discovery candidates and generates insights only when a repository has no prior result or the stored result is older than 72 hours. SenseNova is the primary server-side model. Network timeouts, HTTP 429 responses, and HTTP 5xx responses can retry once with DeepSeek. Both English and Simplified Chinese category, summary, audience, reason, and signals are stored as public read data. Model keys stay in Actions secrets.
+When `AI_PROJECT_INSIGHTS_ENABLED=true`, the collector checks the top 25 discovery candidates and generates insights only when a repository has no prior result or the stored result is older than 72 hours. SenseNova Token Plan model `sensenova-6.7-flash-lite` is the primary server-side model. Network timeouts, HTTP 429 responses, and HTTP 5xx responses can retry once with DeepSeek. Both English and Simplified Chinese category, summary, audience, reason, and signals are stored as public read data. Model keys stay in Actions secrets.
 
 The collector uses a broader set of bounded searches:
 

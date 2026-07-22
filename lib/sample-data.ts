@@ -134,7 +134,7 @@ const SAMPLE_REPOSITORIES: SampleRepository[] = [
       "fast early traction",
     ],
     aiSignalsZh: ["智能体技能", "评估闭环", "可复用流程", "早期增长快"],
-    aiModel: "SenseNova-V6.5-Turbo",
+    aiModel: "sensenova-6.7-flash-lite",
     aiEnrichedAt: "2026-07-18T02:20:00.000Z",
     stars: 1654,
     forks: 231,

@@ -12,7 +12,7 @@ const aiInsightsEnabled = process.env.AI_PROJECT_INSIGHTS_ENABLED === "true"
 const aiInsightRefreshMs = 72 * 60 * 60 * 1000
 const aiRequestTimeoutMs = {
   deepseek: 15_000,
-  sensenova: 30_000,
+  sensenova: 60_000,
 } as const
 const maxRepositories = Math.min(
   Math.max(

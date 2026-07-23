@@ -10,7 +10,10 @@ const configuredAiInsightLimit = Number(
 )
 const aiInsightsEnabled = process.env.AI_PROJECT_INSIGHTS_ENABLED === "true"
 const aiInsightRefreshMs = 72 * 60 * 60 * 1000
-const aiRequestTimeoutMs = 15_000
+const aiRequestTimeoutMs = {
+  deepseek: 15_000,
+  sensenova: 30_000,
+} as const
 const maxRepositories = Math.min(
   Math.max(
     Number.isFinite(configuredMaxRepositories)
@@ -260,7 +263,7 @@ async function requestProjectInsight(
 ): Promise<AiRequestResult> {
   const providerOptions =
     provider.provider === "sensenova"
-      ? { max_tokens: 1200 }
+      ? { max_tokens: 4096 }
       : {
           max_tokens: 1200,
           response_format: { type: "json_object" },
@@ -304,7 +307,7 @@ async function requestProjectInsight(
         "Content-Type": "application/json",
       },
       method: "POST",
-      signal: AbortSignal.timeout(aiRequestTimeoutMs),
+      signal: AbortSignal.timeout(aiRequestTimeoutMs[provider.provider]),
     })
 
     if (!response.ok) {
@@ -326,22 +329,15 @@ async function requestProjectInsight(
       }
     }
 
-    const responseBody: unknown = await response.json()
-    const content = extractAssistantContent(responseBody)
+    const content = extractAssistantContent(await response.json())
     const parsed = content ? readJsonObject(content) : null
     const normalized = parsed ? normalizeLocalizedProjectInsight(parsed) : null
 
     if (!normalized) {
-      const contentPreview = (content ?? JSON.stringify(responseBody))
-        .replace(/\s+/g, " ")
-        .trim()
-        .slice(0, 500)
       console.warn(
         provider.provider +
           " returned an invalid insight for " +
-          repository.full_name +
-          ": " +
-          contentPreview
+          repository.full_name
       )
       return { canFallback: false, content: null }
     }
